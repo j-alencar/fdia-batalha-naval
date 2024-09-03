@@ -1,7 +1,7 @@
 import random
 
 class Oceano:
-    navio_por_quadrados = {'porta_avioes': 5, 'navio_tanque': 4, 'destroier': 3, 'submarino': 2}
+    navio_por_quadrados = {'porta_avioes': 5, 'navio_tanque': 4, 'destroyer': 3, 'submarino': 3, 'navio_patrulha': 2}
     navios_por_status = {navio: 'Em Combate' for navio in navio_por_quadrados}  # Todos começam em combate
     comprimento = 10
 
