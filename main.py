@@ -1,13 +1,13 @@
 import random
 
 class Oceano:
-    navio_por_quadrados = {'porta_avioes': 5, 'navio_tanque': 4, 'destroyer': 3, 'submarino': 3, 'navio_patrulha': 2}
-    navios_por_status = {navio: 'Em Combate' for navio in navio_por_quadrados}  # Todos começam em combate
+    navio_por_quadrados = {'porta-aviões': 5, 'navio-tanque': 4, 'destroyer': 3, 'submarino': 3, 'navio-patrulha': 2}
     comprimento = 10
 
-    def __init__(self, cor, name="Oceano"):
+    def __init__(self, cor, tipo, name="Oceano"):
         self.name = name
         self.cor = cor
+        self.tipo = tipo
 
         matriz = []
         for i in range(self.comprimento):
@@ -20,6 +20,7 @@ class Oceano:
 
         # Adiciona os navios na matriz
         self.posicao_navios = self.colocar_navios()
+        self.navio_por_status  = {navio: 'Em Combate' for navio in self.navio_por_quadrados}  # Todos começam em combate
         self.lista_posicao_navios = [pos for navio in self.posicao_navios.values() for pos in navio]
 
         self.verde = "\033[92m" if self.cor else ""
@@ -77,48 +78,57 @@ class Oceano:
             return f"{self.verde}{item}{self.reset}" if self.cor else item
         return item
 
-    def mostrar_oceano(self):
+    def mostrar_oceano(self):        
+        if self.tipo == "IA": print("OCEANO DO JOGADOR - IA ataca aqui. =====================")
+        else: print("OCEANO DA IA - JOGADOR ataca aqui. =====================")
+
         for linha in self.oceano:
             linha_formatada = " ".join(f"| {self.colorir_item(item)} " for item in linha)
             linha_formatada += "|"
             print(linha_formatada)
 
+
     def atualizar_oceano(self, disparo):
         if disparo not in self.posicoes_tentadas:
             self.tentativas += 1  # O mesmo disparo não conta nova tentativa, só disparos diferentes
             if disparo not in self.oceano_flat():
-                print(f"Hic sunt dracones! Essa célula não está nos mares do mundo conhecido.\n")
+                self.mostrar_oceano()
+                print(f"\nHic sunt dracones! A célula {disparo} não está nos mares do mundo conhecido.\n")
                 return True
             elif disparo not in self.lista_posicao_navios:
-                print(f"SPLASH! {self.name} acertou o mar.\n")
                 self.posicoes_tentadas.append(disparo)
+                self.mostrar_oceano()
+                print(f"\nSPLASH! {self.name} mirou em {disparo} e acertou o mar.\n")
                 return True
             else:
-                print(f"BOOM! {self.name} acertou um navio!\n")
                 self.navios_acertados.append(disparo)
                 self.posicoes_tentadas.append(disparo)
 
                 vizinhos = self.gerar_vizinhos(disparo)
                 # print(f"Coordenadas vizinhas de {disparo}: {vizinhos}")      
                           
+                self.mostrar_oceano()
                 self.atualizar_status_navios()
+                print(f"\nBOOM! {self.name} mirou em {disparo} e acertou um navio!\n")
         else:
-            print(f"Você já tentou a posição {disparo} antes! Tente outra.")
+            self.mostrar_oceano()
+            print(f"\nVocê já tentou a posição {disparo} antes! Tente outra.\n")
             return True
-
+        
     def atualizar_status_navios(self):
         # Verificar se o navio afundou com o disparo
         for tipo_navio, posicoes_navio in self.posicao_navios.items():
-            if self.navios_por_status[tipo_navio] == 'Em Combate' and all(pos in self.navios_acertados for pos in posicoes_navio):
-                print(f'{self.name} acaba de afundar um {tipo_navio}!\n')
-                self.navios_por_status[tipo_navio] = 'Naufragado'
+            if self.navio_por_status[tipo_navio] == 'Em Combate' and all(pos in self.navios_acertados for pos in posicoes_navio):
+                print(f'\n{self.name} acaba de afundar um {tipo_navio}!')
+                self.navio_por_status[tipo_navio] = 'Naufragado'
 
         # Verificar se todos os navios foram afundados                    
         if all(item in self.navios_acertados for item in self.lista_posicao_navios):
-            print("Você afundou todos os navios. O jogo deverá se encerrar agora!")
+            print(f"\n{self.name} afundou todos os navios do adversário. O jogo deverá se encerrar agora!")
             print(f"Total de tentativas: {self.tentativas}")
             return False
         else:
+           # print(self.navio_por_status)
             return True
     
 
@@ -187,13 +197,14 @@ class MarineIA:
 
 
 # Instancia um oceano
-atlantico = Oceano(name="Atlântico", cor=True)
-pacifico = Oceano(name="Pacífico", cor=False)
+atlantico = Oceano(name="Atlântico", tipo="IA", cor=True)
+pacifico = Oceano(name="Pacífico", tipo="Jogador", cor=False)
 
 # Instancia a IA com a lista de posições possíveis
 ia = MarineIA(atlantico.sequencias_possiveis_posicoes())
 
 rodar = True
+turno = 0
 
 print("\n////// SUPA NAVAL BATTLE v0.1 //////\n")
 modo_jogo = input("Escolha o modo de jogo:\n1 - Apenas IA\n2 - Apenas Usuário\n3 - Usuário contra Máquina\nDigite sua opção: ")
@@ -202,19 +213,19 @@ modo_jogo = input("Escolha o modo de jogo:\n1 - Apenas IA\n2 - Apenas Usuário\n
 if modo_jogo == "1":
     print("\n----------------------------------------------------------------\n")
     while rodar:
-        atlantico.mostrar_oceano()
-
         ia_disparo = ia.atirar()
-        print(f"\nIA atirou em: {ia_disparo}\n")
-        rodar = atlantico.atualizar_oceano(ia_disparo)
+        
         if ia_disparo not in atlantico.lista_posicao_navios:
             ia.atualizar_memoria_maquina(2, ia_disparo)
         if ia_disparo in atlantico.lista_posicao_navios:
             ia.atualizar_memoria_maquina(1, ia_disparo)
+        if atlantico.atualizar_oceano(ia_disparo) == False:
+            break
         
         continuar = input("Digite 1 para a IA tentar outro disparo ou 0 para encerrar o jogo: ")
         if continuar == "0":
             break
+
 
 # JOGADOR SOZINHO
 elif modo_jogo == "2":
@@ -226,27 +237,24 @@ elif modo_jogo == "2":
 
 # JOGADOR VS IA
 elif modo_jogo == "3":
-        print("\n----------------------------------------------------------------\n")
-        while rodar:
-            print("OCEANO DO JOGADOR - IA ataca aqui. =====================")
-            atlantico.mostrar_oceano() # Printa matriz todo novo chute de IA
-            print("\n")
-            print("OCEANO DA IA - Jogador ataca aqui =====================")
-            pacifico.mostrar_oceano() # Printa a matriz todo novo chute de Jogador
-            ia_disparo = ia.atirar()
-            print(f"\nIA atirou em: {ia_disparo}\n")
+    print("\n----------------------------------------------------------------\n")
+    while rodar:
+        turno += 1
+        ia_disparo = ia.atirar()
+        
+        if ia_disparo not in atlantico.lista_posicao_navios:
+            ia.atualizar_memoria_maquina(2, ia_disparo)
+        if ia_disparo in atlantico.lista_posicao_navios:
+            ia.atualizar_memoria_maquina(1, ia_disparo)
+        if atlantico.atualizar_oceano(ia_disparo) == False:
+            break
+
+        if turno == 1:
+            pacifico.mostrar_oceano()
+        else: 
+            if pacifico.atualizar_oceano(disparo.upper()) == False: break
             
-            if ia_disparo not in atlantico.lista_posicao_navios:
-                ia.atualizar_memoria_maquina(2, ia_disparo)
-            if ia_disparo in atlantico.lista_posicao_navios:
-                ia.atualizar_memoria_maquina(1, ia_disparo)
-            disparo = input("Digite qual célula deseja atacar (ou 0 para encerrar): ")
-            print(f"Jogador atirou em: {disparo}\n")
-
-
-            if (pacifico.atualizar_oceano(disparo.upper()) == False or
-            atlantico.atualizar_oceano(ia_disparo)) == False:
-                break
-
-            if disparo == 0:
-                break
+        disparo = input("Digite qual célula deseja atacar (ou 0 para encerrar): ")
+        
+        if disparo == '0':
+            break
