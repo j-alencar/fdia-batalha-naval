@@ -31,6 +31,7 @@ class Oceano:
         self.posicoes_tentadas = []
         self.tentativas = 0
 
+
     def colocar_navios(self):
         posicao_navios = {}
         sequencias_possiveis = self.sequencias_possiveis_posicoes()
@@ -145,8 +146,9 @@ class Oceano:
             if candidato in self.oceano_flat():
                 vizinhos.append(candidato)
         return vizinhos
+    
 
-
+ 
 class MarineIA:
     def __init__(self, sequencias_possiveis_posicoes):
         self.sequencias_possiveis_posicoes = sequencias_possiveis_posicoes
@@ -157,16 +159,45 @@ class MarineIA:
     
     def atirar(self):
         # Priorizar as coordenadas vizinhas se existirem
-        if self.coordenadas_vizinhancas:
+        if self.coordenadas_vizinhancas:            
+            # Verificar se o último acerto afundou um navio
+            ultimo_disparo_afundou = self.verificar_ultimo_disparo_afundou()
+
+            if len(self.lista_acertos) > 1 and not ultimo_disparo_afundou and \
+                abs(ord(self.lista_acertos[-1][0]) - ord(self.lista_acertos[-2][0])) == 1 and \
+                abs(int(self.lista_acertos[-1][-1]) - int(self.lista_acertos[-2][-1])) == 0:
+                print("Horizontal!")
+                #TODO gerar vizinhos da orientação a partir do maior navio em combate
+                coordenadas = self.coordenadas_vizinhancas.pop(0)
+                return coordenadas
+            
+            if len(self.lista_acertos) > 1 and not ultimo_disparo_afundou and \
+                abs(ord(self.lista_acertos[-1][0]) - ord(self.lista_acertos[-2][0])) == 0 and \
+                abs(int(self.lista_acertos[-1][-1]) - int(self.lista_acertos[-2][-1])) == 1:
+                print("Vertical!")
+                #TODO gerar vizinhos da orientação a partir do maior navio em combate
+                coordenadas = self.coordenadas_vizinhancas.pop(0)
+                return coordenadas
+
             coordenadas = self.coordenadas_vizinhancas.pop(0)  # Remover e tentar o primeiro vizinho
             return coordenadas
         
         # Se não houver vizinhos, atirar aleatoriamente
         while True:
-            coordenadas = random.choice(self.sequencias_possiveis_posicoes)
-            if coordenadas not in self.lista_coordenadas_usadas:
-                return coordenadas
+            coordenadas = random.choice(list(set(self.sequencias_possiveis_posicoes) - set(self.lista_coordenadas_usadas)))
+            return coordenadas
 
+    def verificar_ultimo_disparo_afundou(self):
+        if not self.lista_acertos:
+            return False
+        
+        ultimo_acerto = self.lista_acertos[-1]
+        for tipo_navio, posicoes_navio in atlantico.posicao_navios.items():
+            if atlantico.navio_por_status[tipo_navio] == 'Em Combate' and \
+                all(pos in atlantico.navios_acertados for pos in posicoes_navio):
+                return True
+        return False
+    
     def atualizar_memoria_maquina(self, informacao, coordenadas):
         self.lista_coordenadas_usadas.append(coordenadas)
         # Remove a coordenada da lista de possíveis posições
@@ -194,6 +225,7 @@ class MarineIA:
             if candidato in self.sequencias_possiveis_posicoes:
                 vizinhos.append(candidato)
         return vizinhos
+
 
 
 # Instancia um oceano
@@ -242,17 +274,11 @@ elif modo_jogo == "3":
         turno += 1
         ia_disparo = ia.atirar()
         
-        if ia_disparo not in atlantico.lista_posicao_navios:
-            ia.atualizar_memoria_maquina(2, ia_disparo)
-        if ia_disparo in atlantico.lista_posicao_navios:
-            ia.atualizar_memoria_maquina(1, ia_disparo)
-        if atlantico.atualizar_oceano(ia_disparo) == False:
-            break
-
-        if turno == 1:
-            pacifico.mostrar_oceano()
-        else: 
-            if pacifico.atualizar_oceano(disparo.upper()) == False: break
+        if ia_disparo not in atlantico.lista_posicao_navios: ia.atualizar_memoria_maquina(2, ia_disparo)
+        if ia_disparo in atlantico.lista_posicao_navios: ia.atualizar_memoria_maquina(1, ia_disparo)
+        if atlantico.atualizar_oceano(ia_disparo) == False: break
+        if turno == 1: pacifico.mostrar_oceano()
+        elif pacifico.atualizar_oceano(disparo.upper()) == False: break
             
         disparo = input("Digite qual célula deseja atacar (ou 0 para encerrar): ")
         
