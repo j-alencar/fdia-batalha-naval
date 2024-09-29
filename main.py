@@ -108,10 +108,7 @@ class Oceano:
                 return True
             else:
                 self.navios_acertados.append(disparo)
-                self.posicoes_tentadas.append(disparo)
-
-                # Remove gerar_vizinhos from Oceano class; now handled by MarineIA
-                
+                self.posicoes_tentadas.append(disparo)                
                 self.mostrar_oceano()
                 self.atualizar_status_navios()
                 print(f"\nBOOM! {self.name} mirou em {disparo} e acertou um navio!\n")
@@ -159,8 +156,8 @@ class MarineIA:
         if self.coordenadas_vizinhancas:
             for coord in self.coordenadas_vizinhancas:
                 if coord not in self.lista_coordenadas_usadas:
-                    self.coordenadas_vizinhancas.remove(coord)  # Remove used neighbors
-                    return coord  # Shoot at the first available neighbor
+                    self.coordenadas_vizinhancas.remove(coord)
+                    return coord
 
         # Se não houver vizinhos, atirar aleatoriamente
         while True:
@@ -188,8 +185,8 @@ class MarineIA:
         elif informacao == 2:  # Erro
             self.lista_erros.append(coordenadas)
             self.orientacao = None  # Resetar orientação ao errar
-            self.ultimo_disparo_afundou = False  # Resetar a variável
-
+            self.ultimo_disparo_afundou = False
+        
     def gerar_vizinhos(self, coordenadas):
         vizinhos = []
         letra, numero = coordenadas[0], int(coordenadas[1:])
@@ -217,25 +214,63 @@ class MarineIA:
             if candidato in self.sequencias_possiveis_posicoes and candidato not in self.lista_coordenadas_usadas:
                 vizinhos.append(candidato)
 
-        print('orientacao', self.orientacao)
-        print('candidatos', candidatos)
-        print('vizinhos', vizinhos)
-
         return vizinhos
 
     def deduzir_orientacao(self):
         if len(self.lista_acertos) > 1:
-            # Verifica a orientação com base nos últimos dois acertos
-            if (self.lista_acertos[-1][0] == self.lista_acertos[-2][0] and 
-                abs(int(self.lista_acertos[-1][1:]) - int(self.lista_acertos[-2][1:])) == 1):
-                self.orientacao = 'vertical'
-                self.coordenadas_vizinhancas.extend([f"{self.lista_acertos[-1][0]}{int(self.lista_acertos[-1][1:]) + 1}",
-                                                      f"{self.lista_acertos[-1][0]}{int(self.lista_acertos[-1][1:]) - 1}"])
-            elif (self.lista_acertos[-1][1:] == self.lista_acertos[-2][1:] and 
-                  abs(ord(self.lista_acertos[-1][0]) - ord(self.lista_acertos[-2][0])) == 1):
+            # Verifica a orientação com base nos últimos dois acertos e o tamanho do maior navio restante
+            tamanho_maior_navio = self.tamanho_maior_navio_restante()
+
+            # Converter as coordenadas para uma forma mais matemática (matriz)
+            ultima_coordenada = (ord(self.lista_acertos[-1][0]) - ord('A'), int(self.lista_acertos[-1][1:]))
+            penultima_coordenada = (ord(self.lista_acertos[-2][0]) - ord('A'), int(self.lista_acertos[-2][1:]))
+
+            diferenca_letras = abs(ultima_coordenada[0] - penultima_coordenada[0])
+            diferenca_numeros = abs(ultima_coordenada[1] - penultima_coordenada[1])
+
+            # Verificar orientação horizontal
+            if diferenca_letras > 0 and diferenca_letras <= tamanho_maior_navio and diferenca_numeros == 0:
                 self.orientacao = 'horizontal'
-                self.coordenadas_vizinhancas.extend([f"{chr(ord(self.lista_acertos[-1][0]) + 1)}{self.lista_acertos[-1][1:]}",
-                                                      f"{chr(ord(self.lista_acertos[-1][0]) - 1)}{self.lista_acertos[-1][1:]}"])
+                self.coordenadas_vizinhancas.clear()
+                
+                # Expandindo para a direita e esquerda com base no tamanho do maior navio restante
+                letra_atual = ord(self.lista_acertos[-1][0])
+                numero_atual = int(self.lista_acertos[-1][1:])
+                for i in range(1, tamanho_maior_navio):  # Extensão para a direita
+                    nova_letra = chr(letra_atual + i)
+                    nova_coordenada = f"{nova_letra}{numero_atual}"
+                    if nova_coordenada in self.sequencias_possiveis_posicoes and nova_coordenada not in self.lista_coordenadas_usadas:
+                        self.coordenadas_vizinhancas.append(nova_coordenada)
+                
+                for i in range(1, tamanho_maior_navio):  # Extensão para a esquerda
+                    nova_letra = chr(letra_atual - i)
+                    nova_coordenada = f"{nova_letra}{numero_atual}"
+                    if nova_coordenada in self.sequencias_possiveis_posicoes and nova_coordenada not in self.lista_coordenadas_usadas:
+                        self.coordenadas_vizinhancas.append(nova_coordenada)
+
+            # Verificar orientação vertical
+            elif diferenca_numeros > 0 and diferenca_numeros <= tamanho_maior_navio and diferenca_letras == 0:
+                self.orientacao = 'vertical'
+                self.coordenadas_vizinhancas.clear()
+                
+                # Expandindo para cima e baixo com base no tamanho do maior navio restante
+                letra_atual = self.lista_acertos[-1][0]
+                numero_atual = int(self.lista_acertos[-1][1:])
+                for i in range(1, tamanho_maior_navio):  # Extensão para cima
+                    novo_numero = numero_atual + i
+                    nova_coordenada = f"{letra_atual}{novo_numero}"
+                    if nova_coordenada in self.sequencias_possiveis_posicoes and nova_coordenada not in self.lista_coordenadas_usadas:
+                        self.coordenadas_vizinhancas.append(nova_coordenada)
+                
+                for i in range(1, tamanho_maior_navio):  # Extensão para baixo
+                    novo_numero = numero_atual - i
+                    nova_coordenada = f"{letra_atual}{novo_numero}"
+                    if nova_coordenada in self.sequencias_possiveis_posicoes and nova_coordenada not in self.lista_coordenadas_usadas:
+                        self.coordenadas_vizinhancas.append(nova_coordenada)
+            
+            print(f"IA: seu navio está na {self.orientacao}! As coordenadas podem ser: {self.coordenadas_vizinhancas}")
+
+
 
     def verificar_ultimo_disparo_afundou(self):
         if not self.lista_acertos:
@@ -243,7 +278,7 @@ class MarineIA:
         for tipo_navio, posicoes_navio in atlantico.posicao_navios.items():
             if atlantico.navio_por_status[tipo_navio] == 'Em Combate' and all(pos in self.lista_acertos for pos in posicoes_navio):
                 atlantico.navio_por_status[tipo_navio] = 'Naufragado'
-                print(f'\n"IA acaba de afundar um {tipo_navio}!')
+                print(f'\nIA acaba de afundar um {tipo_navio}!')
                 self.orientacao = None  # Resetar orientação após afundar
                 self.coordenadas_vizinhancas.clear()  # Resetar vizinhos após afundar
                 return True
@@ -310,6 +345,6 @@ def main():
                 break
 
 if __name__ == "__main__":
-    atlantico = Oceano(name="Atlântico", tipo="IA", cor=True)
+    atlantico = Oceano(name="IA", tipo="IA", cor=True) # Renomeando pra ficar menos confuso na apresentação
     pacifico = Oceano(name="Pacífico", tipo="Jogador", cor=False)
     main()
