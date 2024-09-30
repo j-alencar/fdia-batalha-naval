@@ -236,13 +236,13 @@ class MarineIA:
                 # Expandindo para a direita e esquerda com base no tamanho do maior navio restante
                 letra_atual = ord(self.lista_acertos[-1][0])
                 numero_atual = int(self.lista_acertos[-1][1:])
-                for i in range(1, tamanho_maior_navio):  # Extensão para a direita
+                for i in range(1, tamanho_maior_navio-1):  # Extensão para a direita
                     nova_letra = chr(letra_atual + i)
                     nova_coordenada = f"{nova_letra}{numero_atual}"
                     if nova_coordenada in self.sequencias_possiveis_posicoes and nova_coordenada not in self.lista_coordenadas_usadas:
                         self.coordenadas_vizinhancas.append(nova_coordenada)
                 
-                for i in range(1, tamanho_maior_navio):  # Extensão para a esquerda
+                for i in range(1, tamanho_maior_navio-1):  # Extensão para a esquerda
                     nova_letra = chr(letra_atual - i)
                     nova_coordenada = f"{nova_letra}{numero_atual}"
                     if nova_coordenada in self.sequencias_possiveis_posicoes and nova_coordenada not in self.lista_coordenadas_usadas:
@@ -256,19 +256,19 @@ class MarineIA:
                 # Expandindo para cima e baixo com base no tamanho do maior navio restante
                 letra_atual = self.lista_acertos[-1][0]
                 numero_atual = int(self.lista_acertos[-1][1:])
-                for i in range(1, tamanho_maior_navio):  # Extensão para cima
+                for i in range(1, tamanho_maior_navio-1):  # Extensão para cima
                     novo_numero = numero_atual + i
                     nova_coordenada = f"{letra_atual}{novo_numero}"
                     if nova_coordenada in self.sequencias_possiveis_posicoes and nova_coordenada not in self.lista_coordenadas_usadas:
                         self.coordenadas_vizinhancas.append(nova_coordenada)
                 
-                for i in range(1, tamanho_maior_navio):  # Extensão para baixo
+                for i in range(1, tamanho_maior_navio-1):  # Extensão para baixo
                     novo_numero = numero_atual - i
                     nova_coordenada = f"{letra_atual}{novo_numero}"
                     if nova_coordenada in self.sequencias_possiveis_posicoes and nova_coordenada not in self.lista_coordenadas_usadas:
                         self.coordenadas_vizinhancas.append(nova_coordenada)
             
-            print(f"IA: seu navio está na {self.orientacao}! As coordenadas podem ser: {self.coordenadas_vizinhancas}")
+            if self.orientacao: print(f"IA: seu navio está na {self.orientacao}! As coordenadas podem ser: {self.coordenadas_vizinhancas}")
 
 
 
