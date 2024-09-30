@@ -268,7 +268,8 @@ class MarineIA:
                     if nova_coordenada in self.sequencias_possiveis_posicoes and nova_coordenada not in self.lista_coordenadas_usadas:
                         self.coordenadas_vizinhancas.append(nova_coordenada)
             
-            if self.orientacao: print(f"IA: seu navio está na {self.orientacao}! As coordenadas podem ser: {self.coordenadas_vizinhancas}")
+            if self.orientacao and self.coordenadas_vizinhancas:
+                print(f"IA: seu navio está na {self.orientacao}! As coordenadas podem ser: {self.coordenadas_vizinhancas}")
 
 
 
@@ -278,7 +279,7 @@ class MarineIA:
         for tipo_navio, posicoes_navio in atlantico.posicao_navios.items():
             if atlantico.navio_por_status[tipo_navio] == 'Em Combate' and all(pos in self.lista_acertos for pos in posicoes_navio):
                 atlantico.navio_por_status[tipo_navio] = 'Naufragado'
-                print(f'\nIA acaba de afundar um {tipo_navio}!')
+                print(f'\nIA acaba de afundar um {tipo_navio}!\n')
                 self.orientacao = None  # Resetar orientação após afundar
                 self.coordenadas_vizinhancas.clear()  # Resetar vizinhos após afundar
                 return True
@@ -333,11 +334,16 @@ def main():
             turno += 1
             ia_disparo = ia.atirar()
             
-            if ia_disparo not in atlantico.lista_posicao_navios: ia.atualizar_memoria_maquina(2, ia_disparo)
-            if ia_disparo in atlantico.lista_posicao_navios: ia.atualizar_memoria_maquina(1, ia_disparo)
-            if atlantico.atualizar_oceano(ia_disparo) == False: break
-            if turno == 1: pacifico.mostrar_oceano()
-            elif pacifico.atualizar_oceano(disparo.upper()) == False: break
+            if ia_disparo not in atlantico.lista_posicao_navios: 
+                ia.atualizar_memoria_maquina(2, ia_disparo)
+            if ia_disparo in atlantico.lista_posicao_navios: 
+                ia.atualizar_memoria_maquina(1, ia_disparo)
+            if atlantico.atualizar_oceano(ia_disparo) == False: 
+                break
+            if turno == 1: 
+                pacifico.mostrar_oceano()
+            elif pacifico.atualizar_oceano(disparo.upper()) == False: 
+                break
                 
             disparo = input("Digite qual célula deseja atacar (ou 0 para encerrar): ")
             
